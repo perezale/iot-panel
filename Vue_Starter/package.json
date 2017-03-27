@@ -13,6 +13,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
+    "mqtt-connection": "^3.0.0",
     "vue": "2.2.4",
     "vue-chartjs": "2.5.4",
     "vue-router": "^2.2.0",
