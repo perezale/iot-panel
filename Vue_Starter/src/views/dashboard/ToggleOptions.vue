@@ -32,7 +32,8 @@ export default {
   name: 'toggle-options',
   data () {
     return {
-      client: ''
+      client: '',
+      relays: [1, 2, 3, 4]
     }
   },
   mounted: function () {
@@ -52,43 +53,55 @@ export default {
     client.on('connect', function () {
       console.log('Connected!')
       _self.client.subscribe('esp-c0794b/outTopic', _self.handleMessage)
-      _self.queryStatus(1)
-      _self.queryStatus(2)
-      _self.queryStatus(3)
-      _self.queryStatus(4)
+      _self.queryStatus('GET', 1)
+      _self.queryStatus('GET', 2)
+      _self.queryStatus('GET', 3)
+      _self.queryStatus('GET', 4)
     })
 
     // client.on('message', this.handleMessage)
     client.on('message', _self.handleMessage)
 
     client.connect()
+
+    this.init()
   },
   methods: {
+    init: function () {
+      let _self = this
+      for (let relay of this.relays) {
+        let relayInput = document.getElementById('relay-' + relay)
+        console.log(relayInput)
+        relayInput.addEventListener('change', function () {
+          let checked = (relayInput.checked) ? '1' : '0'
+          _self.queryStatus('POST', relay, checked)
+        })
+      }
+    },
     handleMessage: function (topic, payload, details) {
       if (topic) {
         console.log('New message at: ' + topic)
         if (payload) {
           let msg = JSON.parse(payload)
-          console.log(payload)
           if (msg.module === 'relay') {
             let relay = msg.data.port
-            var relayInput = document.getElementById('relay-' + relay)
+            let relayInput = document.getElementById('relay-' + relay)
             if (msg.data.value === '1') {
-              relayInput.selected = true
+              relayInput.checked = true
             } else {
-              relayInput.selected = false
+              relayInput.checked = false
             }
           }
         }
       }
     },
-    queryStatus: function (port) {
+    queryStatus: function (op, port, value = 'NA') {
       let client = this.client
       let msg = {
         topic: 'esp-c0794b/inTopic',
         qos: 0,
         retain: true,
-        payload: '{"module":"relay","operation":"GET","data":{"port" : ' + port + ', "value": "0"}}'
+        payload: '{"module":"relay","operation":"' + op + '","data":{"port" : ' + port + ', "value": "' + value + '"}}'
       }
       client.publish(msg.topic, msg.payload)
     }
